@@ -1,6 +1,6 @@
 module.exports = {
   siteMetadata: {
-    title: `Slotmachine demo`,
+    title: `Material Slot Machine demo`,
     description: `A basic slotmachine demo application built with React and Material UI`,
     author: `@deemoowoor,@dominicabela`,
   },
