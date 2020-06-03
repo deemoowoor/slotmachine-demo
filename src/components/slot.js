@@ -3,26 +3,44 @@ import PropTypes from 'prop-types'
 import { graphql } from 'gatsby'
 
 import { Stage, Layer, Rect, Line, Text, Image } from 'react-konva'
+import { Image as CanvasImage } from 'react-konva'
 import Konva from 'konva'
 import useImage from 'use-image'
-import { Image as CanvasImage } from 'react-konva'
+
 
 class SlotMachine extends React.Component {
   state = {
-    image: null
+    images: {},
   }
 
-  handleSpin = () => {}
+  componentDidMount() {
+    this.updateImages()
+  }
+
+  updateImages = () => {
+    const { resources } = this.props
+    
+    Object.keys(resources).map(key => {
+      const source = resources[key].childImageSharp.fixed.src
+    })
+  }
+
+  handleSpinButton = () => {}
 
   render() {
+    const { images } = this.state
+
     const reelBase = 120
+    const reelSpacing = 40
+    const reelBases = [0, 141, 282]
     const lineBases = [0, 151, 302]
+
     return (
       <Stage width={960} height={780}>
         <Layer>
-          <ReelBackground x={reelBase + 80} />
-          <ReelBackground x={reelBase + 80 + 40 + 141} />
-          <ReelBackground x={reelBase + 80 + 80 + 282} />
+          <ReelBackground x={reelBase + 80 + reelBases[0]} />
+          <ReelBackground x={reelBase + 80 + reelSpacing + reelBases[1]} />
+          <ReelBackground x={reelBase + 80 + reelSpacing * 2 + reelBases[2]} />
         </Layer>
         <Layer>
           <PaylineIndicator
@@ -48,6 +66,64 @@ class SlotMachine extends React.Component {
           />
         </Layer>
         <Layer>
+          <CanvasImage
+            stroke="magenta"
+            x={reelBase + 80 + reelSpacing * 0 + reelBases[0]}
+            y={lineBases[0]}
+            image={images.cherry}
+          />
+          <CanvasImage
+            stroke="magenta"
+            x={reelBase + 80 + reelSpacing * 1 + reelBases[1]}
+            y={lineBases[0]}
+            image={images.cherry}
+          />
+          <CanvasImage
+            stroke="magenta"
+            x={reelBase + 80 + reelSpacing * 2 + reelBases[2]}
+            y={lineBases[0]}
+            image={images.cherry}
+          />
+
+          <CanvasImage
+            stroke="magenta"
+            x={reelBase + 80 + reelSpacing * 0 + reelBases[0]}
+            y={lineBases[1]}
+            image={images.seven}
+          />
+          <CanvasImage
+            stroke="magenta"
+            x={reelBase + 80 + reelSpacing * 1 + reelBases[1]}
+            y={lineBases[1]}
+            image={images.seven}
+          />
+          <CanvasImage
+            stroke="magenta"
+            x={reelBase + 80 + reelSpacing * 2 + reelBases[2]}
+            y={lineBases[1]}
+            image={images.seven}
+          />
+
+          <CanvasImage
+            stroke="magenta"
+            x={reelBase + 80 + reelSpacing * 0 + reelBases[0]}
+            y={lineBases[2]}
+            image={images.bar}
+          />
+          <CanvasImage
+            stroke="magenta"
+            x={reelBase + 80 + reelSpacing * 1 + reelBases[1]}
+            y={lineBases[2]}
+            image={images.bar2}
+          />
+          <CanvasImage
+            stroke="magenta"
+            x={reelBase + 80 + reelSpacing * 2 + reelBases[2]}
+            y={lineBases[2]}
+            image={images.bar3}
+          />
+        </Layer>
+        <Layer>
           <Payline x={reelBase + 65} y={lineBases[0]} />
           <Payline x={reelBase + 65} y={lineBases[1]} />
           <Payline x={reelBase + 65} y={lineBases[2]} />
@@ -60,6 +136,8 @@ class SlotMachine extends React.Component {
 SlotMachine.propTypes = {}
 
 export default SlotMachine
+
+const SevenImage = ({}) => {}
 
 const PaylineIndicator = ({ x, y, padding, fill, number }) => {
   return (

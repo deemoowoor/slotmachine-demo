@@ -1,25 +1,21 @@
 import React from 'react'
 
-import { StaticQuery, graphql } from 'gatsby'
+import { graphql } from 'gatsby'
 
 export const reelImage = graphql`
   fragment reelImage on File {
     childImageSharp {
-      fixed(width: 125, height: 125) {
+      fixed(width: 141, height: 121) {
         ...GatsbyImageSharpFixed
       }
     }
   }
 `
 
-export const reelImages = graphql`
+const reelImages = graphql`
   query {
     seven: file(relativePath: { eq: "7.png" }) {
-      childImageSharp {
-        fixed(width: 125, height: 125) {
-          ...GatsbyImageSharpFixed
-        }
-      }
+      ...reelImage
     }
 
     cherry: file(relativePath: { eq: "Cherry.png" }) {
@@ -39,9 +35,4 @@ export const reelImages = graphql`
     }
   }
 `
-
-const SevenImage = ({ render }) => (
-  <StaticQuery query={reelImages} render={render} />
-)
-
-export default SevenImage
+export default reelImages

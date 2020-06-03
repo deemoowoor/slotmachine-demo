@@ -1,13 +1,17 @@
 import React from 'react'
 
+import { useStaticQuery } from 'gatsby'
 import { makeStyles } from '@material-ui/core/styles'
 import Grid from '@material-ui/core/Grid'
 import Divider from '@material-ui/core/Divider'
+
 import SlotMachine from '../components/slot'
 import Layout from '../components/layout'
 import Image from '../components/image'
-import SevenImage from '../components/reelImage'
 import SEO from '../components/seo'
+
+import reelImages from '../components/reelImage'
+
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -20,6 +24,8 @@ const useStyles = makeStyles(theme => ({
 }))
 
 const IndexPage = () => {
+
+  const data = useStaticQuery(reelImages)
   const classes = useStyles()
 
   return (
@@ -36,7 +42,7 @@ const IndexPage = () => {
         </Grid>
       </Grid>
       <Divider />
-      <SlotMachine />
+      <SlotMachine resources={data} />
     </Layout>
   )
 }
