@@ -4,7 +4,6 @@ import { graphql, useStaticQuery } from 'gatsby'
 import { makeStyles } from '@material-ui/core/styles'
 import Grid from '@material-ui/core/Grid'
 import Divider from '@material-ui/core/Divider'
-import IconButton from '@material-ui/core/Button'
 
 import SlotMachine from '../components/slot'
 import Layout from '../components/layout'
@@ -27,11 +26,18 @@ const useStyles = makeStyles(theme => ({
 const IndexPage = () => {
   const data = useStaticQuery(graphql`
   query {
+    cherry: file(relativePath: { eq: "Cherry.png" }) {
+      ...reelImage
+    }
+
     seven: file(relativePath: { eq: "7.png" }) {
       ...reelImage
     }
 
-    cherry: file(relativePath: { eq: "Cherry.png" }) {
+    bar3: file(relativePath: { eq: "3xBAR.png" }) {
+      ...reelImage
+    }
+    bar2: file(relativePath: { eq: "2xBAR.png" }) {
       ...reelImage
     }
 
@@ -39,17 +45,10 @@ const IndexPage = () => {
       ...reelImage
     }
 
-    bar2: file(relativePath: { eq: "2xBAR.png" }) {
-      ...reelImage
-    }
-
-    bar3: file(relativePath: { eq: "3xBAR.png" }) {
-      ...reelImage
-    }
   }
 `)
 
-  const classes = useStyles()
+  //const classes = useStyles()
 
   return (
     <Layout>
@@ -65,9 +64,7 @@ const IndexPage = () => {
         </Grid>
       </Grid>
       <Divider />
-      <SlotMachine stroke={"magenta"} resources={data} /> 
-      <Divider />
-      <IconButton></IconButton>
+      <SlotMachine stroke={null} resources={data} /> 
       <Divider />
       <Typography>Debug area</Typography>
     </Layout>
