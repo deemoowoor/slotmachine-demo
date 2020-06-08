@@ -5,17 +5,18 @@ import Grid from '@material-ui/core/Grid'
 import Button from '@material-ui/core/Button'
 import TextField from '@material-ui/core/TextField'
 import Slider from '@material-ui/core/Slider'
-import { Typography } from '@material-ui/core'
+import Paper from '@material-ui/core/Paper'
+import Typography from '@material-ui/core/Typography'
 
 import { Stage, Layer, Rect, Line, Text, Group } from 'react-konva'
 
 import { Spring } from 'react-spring/renderprops-konva'
+import { Keyframes, animated } from 'react-spring/renderprops'
 
 import { Reel } from './reel'
 
 const LINE_HEIGHT = 75
-const REEL = 
-[
+const REEL = [
   0,
   1,
   0,
@@ -77,16 +78,23 @@ const SYMBOL_1BAR = 5
 const PAYTABLE = {
   '[1]': payline => [2000, 1000, 4000][payline],
   '[2]': payline => 150,
-  '[1, 2]': payline => 75,
+  '[1,2]': payline => 75,
   '[3]': payline => 50,
   '[4]': payline => 20,
   '[5]': payline => 10,
-  '[3, 4, 5]': payline => 5,
+  '[3,4]': payline => 5,
+  '[3,5]': payline => 5,
+  '[4,5]': payline => 5,
+  '[3,4,5]': payline => 5,
 }
 
-function findWin(payline, paylineSymbols) {
+function findWin(bet, payline, paylineSymbols) {
   const set = new Set(paylineSymbols)
-  console.log(set)
+  const hash = JSON.stringify([...set.values()].sort())
+  const combination = PAYTABLE[hash]
+  if (typeof combination === 'function') {
+    return { payline, win: combination(payline) * bet, paylineSymbols }
+  }
   return null
 }
 
@@ -98,24 +106,15 @@ class SlotMachine extends React.Component {
     state: ['stopped', 'stopped', 'stopped'],
     startAt: [0, 0, 0],
     stopAt: [0, 0, 0],
-    symbols: [],
     bet: 5,
     oldBalance: 100,
     balance: 100,
     canSpin: false,
     showPaylines: false,
     paylines: [2, 1, 0],
-    wins: [],
+    wins: {},
+    canShowWins: false,
     debugInputReelPosition: { 0: 0, 1: 0, 2: 0 },
-  }
-
-  getRandomReelPos = () => (Math.floor(Math.random() * 10) % 10) + 10
-
-  getReelSymbol = (reelIndex, payline, pos) => {
-    const { reels } = this.state
-    const reel = reels[reelIndex]
-    const symbolIndex = reel.length - (pos + payline)
-    return reel[symbolIndex]
   }
 
   async componentDidMount() {
@@ -130,6 +129,15 @@ class SlotMachine extends React.Component {
       stopAt: newStartAt.slice(0),
       canSpin: this.state.balance >= this.state.bet,
     })
+  }
+
+  getRandomReelPos = () => (Math.floor(Math.random() * 10) % 10) + 10
+
+  getReelSymbol = (reelIndex, payline, pos) => {
+    const { reels } = this.state
+    const reel = reels[reelIndex]
+    const symbolIndex = reel.length - (pos + payline)
+    return reel[symbolIndex]
   }
 
   generateReels = () => {
@@ -177,42 +185,69 @@ class SlotMachine extends React.Component {
   }
 
   handleSpinButton = () => {
-    const { balance, bet, images, reels } = this.state
+    const { reels } = this.state
+
+    const stopAt = reels.map(this.getRandomReelPos)
+    this.spin({ stopAt })
+  }
+
+  handleWins = stopAt => {
+    const { paylines, bet } = this.state
+
+    const wins = []
+
+    paylines.map(payline => {
+      const symbols = stopAt.map((reelPos, reelIndex) =>
+        this.getReelSymbol(reelIndex, payline, reelPos)
+      )
+
+      const win = findWin(bet, payline, symbols)
+
+      if (win !== null) {
+        wins[payline] = win
+      }
+    })
+
+    return wins
+  }
+
+  debugSymbols = stopAt => {
+    const { paylines } = this.state
+    const symbols = paylines.map(payline =>
+      stopAt.map((reelPos, reelIndex) =>
+        this.getReelSymbol(reelIndex, payline, reelPos)
+      )
+    )
+
+    console.log('STOPS AT', stopAt, symbols)
+  }
+
+  spin = ({ stopAt }) => {
+    const { balance, bet } = this.state
 
     if (balance < bet) {
       return
     }
 
-    const newStopAt = reels.map(this.getRandomReelPos)
-
-    const symbols = this.state.paylines.map((payline) =>
-      newStopAt.map((reelPos, reelIndex) =>
-        this.getReelSymbol(reelIndex, payline, reelPos)
-      )
-    )
-
-    console.log('STOPS AT', newStopAt, symbols)
-
-    const wins = []
-
-    this.state.paylines.map((_p, payline) => {
-      const symbols = newStopAt.map((reelPos, reelIndex) =>
-        this.getReelSymbol(reelIndex, payline, reelPos)
-      )
-
-      console.log(symbols.map(s => images[s]))
-      findWin(payline, symbols)
-    })
-
     this.setState({
       state: ['start', 'start', 'start'],
-      stopAt: newStopAt,
-      symbols: symbols,
+      stopAt,
       canSpin: false,
       oldBalance: balance,
       balance: balance - bet,
+      wins: {},
+      canShowWins: false,
     })
 
+    this.debugSymbols(stopAt)
+    const wins = this.handleWins(stopAt)
+
+    this.setState({ wins })
+
+    this.scheduleSpinAnimations()
+  }
+
+  scheduleSpinAnimations = () => {
     setTimeout(
       () => this.setState({ state: ['spinning', 'spinning', 'spinning'] }),
       500
@@ -235,13 +270,40 @@ class SlotMachine extends React.Component {
 
     setTimeout(
       () =>
-        this.setState({
-          state: ['stopped', 'stopped', 'stopped'],
-          startAt: this.state.stopAt.slice(0),
-          canSpin: this.state.balance >= this.state.bet,
-        }),
+        this.setState(
+          {
+            state: ['stopped', 'stopped', 'stopped'],
+            startAt: this.state.stopAt.slice(0),
+            canSpin: this.state.balance >= this.state.bet,
+          },
+          this.handleWinTransfer
+        ),
       3000
     )
+
+    setTimeout(
+      () =>
+        this.setState({
+          canShowWins: true,
+        }),
+      3100
+    )
+  }
+
+  handleWinTransfer = () => {
+    const { wins, balance } = this.state
+    const sumOfAllWins = Object.values(wins)
+      .map(w => w.win)
+      .reduce((p, cur) => p + cur, 0)
+
+    const newBalance = balance + sumOfAllWins
+    console.log(
+      'Balance after transferring wins (',
+      sumOfAllWins,
+      '):',
+      newBalance
+    )
+    this.setState({ oldBalance: balance, balance: newBalance })
   }
 
   handleReelPositionInputChange = (event, index) => {
@@ -254,22 +316,16 @@ class SlotMachine extends React.Component {
 
     newDebugInputReelPosition[index] =
       event.target.value === '' ? '' : Number(event.target.value)
-    this.setState({ debugInputReelPosition: newDebugInputReelPosition })
-  }
 
-  handleBlur = () => {
-    if (value < 0) {
-      setValue(0)
-    } else if (value > 100) {
-      setValue(100)
-    }
+    this.setState({ debugInputReelPosition: newDebugInputReelPosition })
   }
 
   handleSetReelsToPos = () => {
     const { debugInputReelPosition } = this.state
-    
-    const symbols = this.state.paylines.map((payline) =>
-      Object.values(debugInputReelPosition).map((reelPos, reelIndex) =>
+
+    const stops = Object.values(debugInputReelPosition).slice(0)
+    const symbols = this.state.paylines.map(payline =>
+      stops.map((reelPos, reelIndex) =>
         this.getReelSymbol(reelIndex, payline, reelPos)
       )
     )
@@ -277,9 +333,25 @@ class SlotMachine extends React.Component {
     console.log('Symbols:', symbols)
 
     this.setState({
-      stopAt: debugInputReelPosition,
-      startAt: debugInputReelPosition,
+      wins: {},
+      stopAt: stops.slice(0),
+      startAt: stops.slice(0),
     })
+  }
+
+  handleDebugTriggerWins = () => {
+    const { stopAt, balance, bet } = this.state
+    const wins = this.handleWins(stopAt)
+
+    this.setState(
+      {
+        oldBalance: balance,
+        balance: balance - bet,
+        wins,
+        canShowWins: true,
+      },
+      this.handleWinTransfer
+    )
   }
 
   render() {
@@ -293,13 +365,19 @@ class SlotMachine extends React.Component {
       bet,
       oldBalance,
       balance,
-      showPaylines,
       debugInputReelPosition,
+      wins,
+      canShowWins,
+      paylines,
     } = this.state
     const { stroke } = this.props
 
     if (!reels) {
       return null
+    }
+
+    if (wins.length > 0) {
+      console.log('Wins:', wins, canShowWins)
     }
 
     const reelBase = 120
@@ -309,161 +387,148 @@ class SlotMachine extends React.Component {
     const leftMargin = 80
 
     return (
-      <Grid container spacing={2} justify="center">
-        <Grid item>
-          <Stage width={960} height={400}>
-            <Layer>
-              {reels.map((_reel, index) => (
-                <ReelBackground
-                  key={`reelbg-${index}`}
-                  x={
-                    reelBase +
-                    leftMargin +
-                    reelSpacing * index +
-                    reelBases[index]
-                  }
-                />
-              ))}
-            </Layer>
-            <Layer clip={{ x: 120, y: 62, width: 593, height: 327 }}>
-              {reels.map((reel, index) => (
-                <Reel
-                  key={`reel-${index}`}
-                  x={
-                    reelBase +
-                    leftMargin +
-                    5 +
-                    reelSpacing * index +
-                    reelBases[index]
-                  }
-                  lineHeight={LINE_HEIGHT}
-                  stroke={stroke}
-                  images={images}
-                  reel={reel}
-                  state={state[index]}
-                  startAt={startAt[index]}
-                  stopAt={stopAt[index]}
-                />
-              ))}
-            </Layer>
-            <Layer>
-              <PaylineIndicator
-                x={reelBase}
-                y={paylineBases[0]}
-                padding={{ y: 40 }}
-                fill={'gold'}
-                number={1}
-                onClick={() => this.setState({ showPaylines: !showPaylines })}
-              />
-              <PaylineIndicator
-                x={reelBase}
-                y={paylineBases[1]}
-                padding={{ y: 40 }}
-                fill={'gold'}
-                number={2}
-                onClick={() => this.setState({ showPaylines: !showPaylines })}
-              />
-              <PaylineIndicator
-                x={reelBase}
-                y={paylineBases[2]}
-                padding={{ y: 40 }}
-                fill={'gold'}
-                number={3}
-                onClick={() => this.setState({ showPaylines: !showPaylines })}
-              />
-              <Payline
-                x={reelBase + 65}
-                y={paylineBases[0]}
-                visible={showPaylines}
-              />
-              <Payline
-                x={reelBase + 65}
-                y={paylineBases[1]}
-                visible={showPaylines}
-              />
-              <Payline
-                x={reelBase + 65}
-                y={paylineBases[2]}
-                visible={showPaylines}
-              />
-            </Layer>
-          </Stage>
-        </Grid>
-        <Grid item xs={3}>
-          {canSpin ? (
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => this.handleSpinButton()}
-            >
-              Spin!
-            </Button>
-          ) : (
-            <Button variant="contained" disabled>
-              Spin!
-            </Button>
-          )}
-        </Grid>
-        <Grid item xs={3}>
-          <Typography>Bet</Typography>
-          <Typography>{bet}</Typography>
-          <Slider
-            disabled={!canSpin}
-            defaultValue={0}
-            value={typeof bet === 'number' ? bet : 0}
-            aria-labelledby="discrete-slider"
-            valueLabelDisplay="on"
-            step={1}
-            marks
-            min={1}
-            max={10}
-            onChange={(event, newValue) => this.setState({ bet: newValue })}
-          />
-        </Grid>
-        <Grid item xs={3}>
-          <Typography>
-            Balance{' '}
-            <Spring from={{ balance: oldBalance }} to={{ balance }}>
-              {props => props.balance.toFixed(0)}
-            </Spring>
-          </Typography>
-        </Grid>
-        <Grid item xs={12}>
-          <Typography variant="h4">Debug</Typography>
-        </Grid>
-        <Grid item xs={6}>
-          <Typography variant="h6" id="input-reel-positions">
-            Reel positions
-          </Typography>
-          {reels.map((_reel, index) => (
-            <TextField
-              key={`reel-${index}-position`}
-              onChange={event =>
-                this.handleReelPositionInputChange(event, index)
-              }
-              id={`reel-${index}-position`}
-              variant="outlined"
-              label={`Reel ${index + 1}`}
-              value={debugInputReelPosition[index]}
-              inputProps={{
-                step: 1,
-                min: 0,
-                max: 50,
-                type: 'number',
-                'aria-labelledby': 'input-reel-positions',
-              }}
+      <React.Fragment>
+        <Grid container spacing={2} justify="center">
+          <Grid item>
+            <Stage width={960} height={400}>
+              <Layer>
+                {reels.map((_reel, index) => (
+                  <ReelBackground
+                    key={`reelbg-${index}`}
+                    x={
+                      reelBase +
+                      leftMargin +
+                      reelSpacing * index +
+                      reelBases[index]
+                    }
+                  />
+                ))}
+              </Layer>
+              <Layer clip={{ x: 120, y: 62, width: 593, height: 327 }}>
+                {reels.map((reel, index) => (
+                  <Reel
+                    key={`reel-${index}`}
+                    x={
+                      reelBase +
+                      leftMargin +
+                      5 +
+                      reelSpacing * index +
+                      reelBases[index]
+                    }
+                    lineHeight={LINE_HEIGHT}
+                    stroke={stroke}
+                    images={images}
+                    reel={reel}
+                    state={state[index]}
+                    startAt={startAt[index]}
+                    stopAt={stopAt[index]}
+                  />
+                ))}
+              </Layer>
+              <Layer>
+                {paylines.map((payline, i) => (
+                  <Payline
+                    key={`payline-${i}`}
+                    x={reelBase}
+                    y={paylineBases[i]}
+                    padding={{ y: 40 }}
+                    fill={'gold'}
+                    number={i}
+                    win={wins[payline]}
+                    canShowWins={canShowWins}
+                  />
+                ))}
+              </Layer>
+            </Stage>
+          </Grid>
+          <Grid item xs={3}>
+            {canSpin ? (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => this.handleSpinButton()}
+              >
+                Spin!
+              </Button>
+            ) : (
+              <Button variant="contained" disabled>
+                Spin!
+              </Button>
+            )}
+          </Grid>
+          <Grid item xs={3}>
+            <Typography>Bet</Typography>
+            <Typography>{bet}</Typography>
+            <Slider
+              disabled={!canSpin}
+              defaultValue={0}
+              value={typeof bet === 'number' ? bet : 0}
+              aria-labelledby="discrete-slider"
+              valueLabelDisplay="on"
+              step={1}
+              marks
+              min={1}
+              max={10}
+              onChange={(_, newValue) => this.setState({ bet: newValue })}
             />
-          ))}
-
-          <Button
-            onClick={this.handleSetReelsToPos}
-            variant="outlined"
-            color="primary"
-          >
-            Set
-          </Button>
+          </Grid>
+          <Grid item xs={3}>
+            <Typography>
+              Balance{' '}
+              <Spring from={{ balance: oldBalance }} to={{ balance }}>
+                {props => props.balance.toFixed(0)}
+              </Spring>
+            </Typography>
+          </Grid>
         </Grid>
-      </Grid>
+        <Paper>
+          <Grid container spacing={2} justify="center">
+            <Grid item xs={12}>
+              <Typography variant="h4">Debug</Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography variant="h6" id="input-reel-positions">
+                Reel positions
+              </Typography>
+              {reels.map((_reel, index) => (
+                <TextField
+                  key={`reel-${index}-position`}
+                  onChange={event =>
+                    this.handleReelPositionInputChange(event, index)
+                  }
+                  id={`reel-${index}-position`}
+                  variant="outlined"
+                  label={`Reel ${index + 1}`}
+                  value={debugInputReelPosition[index]}
+                  inputProps={{
+                    step: 1,
+                    min: 0,
+                    max: 50,
+                    type: 'number',
+                    'aria-labelledby': 'input-reel-positions',
+                  }}
+                />
+              ))}
+
+              <Button
+                onClick={this.handleSetReelsToPos}
+                variant="outlined"
+                color="primary"
+              >
+                Set
+              </Button>
+
+              <Button
+                onClick={this.handleDebugTriggerWins}
+                variant="outlined"
+                color="primary"
+              >
+                Trigger wins
+              </Button>
+            </Grid>
+          </Grid>
+        </Paper>
+      </React.Fragment>
     )
   }
 }
@@ -474,7 +539,69 @@ SlotMachine.propTypes = {
 
 export default SlotMachine
 
-const PaylineIndicator = ({ x, y, padding, fill, number, onClick }) => {
+const Payline = ({ x, y, padding, fill, number, win, canShowWins }) => {
+  const [showLine, setShowLine] = React.useState(false)
+  let winField = null
+  let line = null
+  const handleShowLine = () => setShowLine(!showLine)
+
+  if (showLine) {
+    line = (
+      <Line
+        x={x + 65}
+        y={y + 60}
+        points={[0, 0, 550, 0]}
+        stroke={'gold'}
+        opacity={0.8}
+        visible={visible}
+      />
+    )
+  }
+
+  const PaylineWinAnimation = Keyframes.Spring(async next => {
+    while (true) {
+      await next({
+        from: { opacity: 1.0 },
+        to: { opacity: 0.1 },
+      })
+
+      await next({
+        from: { opacity: 0.1 },
+        to: { opacity: 1.0 },
+      })
+    }
+  })
+
+  if (canShowWins && typeof win !== 'undefined') {
+    const AnimatedLine = animated('Line')
+    const AnimatedRect = animated('Rect')
+
+    winField = (
+      <PaylineWinAnimation reset config={{ duration: 500 }}>
+        {props => (
+          <React.Fragment>
+            <Rect
+              x={x + 620}
+              y={y + padding.y}
+              width={60}
+              height={40}
+              fill={fill}
+              shadowBlur={3}
+            />
+            <Line
+              x={x + 65}
+              y={y + 60}
+              points={[0, 0, 550, 0]}
+              stroke={'gold'}
+              opacity={props.opacity}
+            />
+            <Text text={win.win} x={x + 625} y={y + padding.y + 15} />
+          </React.Fragment>
+        )}
+      </PaylineWinAnimation>
+    )
+  }
+
   return (
     <React.Fragment>
       <Rect
@@ -484,23 +611,12 @@ const PaylineIndicator = ({ x, y, padding, fill, number, onClick }) => {
         height={40}
         fill={fill}
         shadowBlur={3}
-        onClick={onClick}
+        onClick={handleShowLine}
       />
       <Text text={`Payline ${number}`} x={x + 5} y={y + padding.y + 15} />
+      {winField}
+      {line}
     </React.Fragment>
-  )
-}
-
-const Payline = ({ x, y, visible }) => {
-  return (
-    <Line
-      x={x}
-      y={60 + y}
-      points={[0, 0, 550, 0]}
-      stroke={'gold'}
-      opacity={0.8}
-      visible={visible}
-    />
   )
 }
 
