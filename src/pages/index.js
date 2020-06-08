@@ -1,7 +1,7 @@
 import React from 'react'
 
 import { graphql, useStaticQuery } from 'gatsby'
-import { makeStyles } from '@material-ui/core/styles'
+//import { makeStyles } from '@material-ui/core/styles'
 import Grid from '@material-ui/core/Grid'
 import Divider from '@material-ui/core/Divider'
 
@@ -10,9 +10,9 @@ import Layout from '../components/layout'
 import Image from '../components/image'
 import SEO from '../components/seo'
 
-import { Typography } from '@material-ui/core'
+//import { Typography } from '@material-ui/core'
 
-
+/*
 const useStyles = makeStyles(theme => ({
   root: {
     width: '100%',
@@ -22,6 +22,7 @@ const useStyles = makeStyles(theme => ({
     paddingLeft: theme.spacing(4),
   },
 }))
+*/
 
 const IndexPage = () => {
   const data = useStaticQuery(graphql`
@@ -65,8 +66,7 @@ const IndexPage = () => {
       </Grid>
       <Divider />
       <SlotMachine stroke={null} resources={data} /> 
-      <Divider />
-      <Typography>Debug area</Typography>
+      
     </Layout>
   )
 }
