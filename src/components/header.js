@@ -21,9 +21,6 @@ import ListItemIcon from '@material-ui/core/ListItemIcon'
 import ListItemText from '@material-ui/core/ListItemText'
 import HomeIcon from '@material-ui/icons/Home'
 import ListIcon from '@material-ui/icons/ViewList'
-import Avatar from '@material-ui/core/Avatar'
-
-import Image from '../components/image'
 
 const drawerWidth = 240
 
@@ -118,7 +115,6 @@ const Header = ({ siteTitle }) => {
           >
             <MenuIcon />
           </IconButton>
-          <Avatar><Image /></Avatar>
           <Typography variant="h6" color="inherit">
             {siteTitle}
           </Typography>
