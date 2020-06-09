@@ -3,7 +3,7 @@ import React from 'react'
 import { Image } from 'react-konva'
 import { Keyframes, animated } from 'react-spring/renderprops'
 
-export const Reel = ({
+const Reel = ({
   x,
   lineHeight,
   images,
@@ -62,7 +62,6 @@ export const Reel = ({
     return (
       <AnimatedGroup y={props.y}>
         {reel.map((s, index) => {
-          //console.log({s, image: images[s]})
           return (<Image
             key={`symbol-${index}`}
             stroke={stroke}
@@ -83,3 +82,4 @@ export const Reel = ({
   )
 }
 
+export default Reel
