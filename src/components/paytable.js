@@ -10,6 +10,7 @@ import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction'
 import Avatar from '@material-ui/core/Avatar'
 import AvatarGroup from '@material-ui/core/Avatar'
 import Paper from '@material-ui/core/Paper'
+import Container from '@material-ui/core/Container'
 
 import Typography from '@material-ui/core/Typography'
 
@@ -53,7 +54,7 @@ const Paytable = ({ images, bet, canShowWins, wins }) => {
 
   return (
     <Paper>
-      <Typography variant="h5">Paytable</Typography>
+      <Container><Typography variant="h5">Paytable</Typography></Container>
       <List className={classes.paytable} dense={true}>
         {PAYTABLE_VIEW.map((item, index) => {
           return (

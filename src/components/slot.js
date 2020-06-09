@@ -308,12 +308,7 @@ class SlotMachine extends React.Component {
       .reduce((p, cur) => p + cur, 0)
 
     const newBalance = balance + sumOfAllWins
-    console.log(
-      'Balance after transferring wins (',
-      sumOfAllWins,
-      '):',
-      newBalance
-    )
+    
     this.setState({ oldBalance: balance, balance: newBalance })
   }
 
@@ -391,10 +386,6 @@ class SlotMachine extends React.Component {
 
     if (!reels) {
       return null
-    }
-
-    if (wins.length > 0) {
-      console.log('Wins:', wins, canShowWins)
     }
 
     const reelBase = 2
@@ -595,7 +586,6 @@ const Payline = ({ x, y, fill, number, win, canShowWins }) => {
   let line = null
 
   const handleShowLine = () => {
-    console.log('handleShowLine', showLine)
     setShowLine(!showLine)
   }
 
