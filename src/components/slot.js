@@ -5,10 +5,8 @@ import { withStyles } from '@material-ui/core/styles'
 
 import Grid from '@material-ui/core/Grid'
 import Button from '@material-ui/core/Button'
-import TextField from '@material-ui/core/TextField'
-import Slider from '@material-ui/core/Slider'
-import Paper from '@material-ui/core/Paper'
 import Typography from '@material-ui/core/Typography'
+import Slider from '@material-ui/core/Slider'
 import Container from '@material-ui/core/Container'
 
 import { Stage, Layer, Rect, Line, Text } from 'react-konva'
@@ -18,6 +16,7 @@ import { Keyframes, animated } from 'react-spring/renderprops'
 
 import Reel from './reel'
 import Paytable from './paytable'
+import DebugConsole from './debugConsole'
 
 const styles = theme => ({
   stage: {
@@ -79,14 +78,21 @@ const REEL = [
   4,
 ]
 
+/*
 const SYMBOL_CHERRY = 1
 const SYMBOL_SEVEN = 2
 const SYMBOL_3BAR = 3
 const SYMBOL_2BAR = 4
 const SYMBOL_1BAR = 5
+*/
 
 const PAYTABLE = {
-  '[1]': payline => [[4000, 0], [1000, 2],[2000, 1]][payline],
+  '[1]': payline =>
+    [
+      [4000, 0],
+      [1000, 2],
+      [2000, 1],
+    ][payline],
   '[2]': () => [150, 3],
   '[1,2]': () => [75, 4],
   '[3]': () => [50, 5],
@@ -103,8 +109,13 @@ function findWin(bet, payline, paylineSymbols) {
   const hash = JSON.stringify([...set.values()].sort())
   const combination = PAYTABLE[hash]
   if (typeof combination === 'function') {
-    const [win, paytable_view_index] = combination(payline) 
-    return { payline, win: win * bet, paylineSymbols, index: paytable_view_index }
+    const [win, paytable_view_index] = combination(payline)
+    return {
+      payline,
+      win: win * bet,
+      paylineSymbols,
+      index: paytable_view_index,
+    }
   }
   return null
 }
@@ -125,7 +136,6 @@ class SlotMachine extends React.Component {
     paylines: [2, 1, 0],
     wins: {},
     canShowWins: false,
-    debugInputReelPosition: { 0: 0, 1: 0, 2: 0 },
   }
 
   async componentDidMount() {
@@ -308,28 +318,12 @@ class SlotMachine extends React.Component {
       .reduce((p, cur) => p + cur, 0)
 
     const newBalance = balance + sumOfAllWins
-    
+
     this.setState({ oldBalance: balance, balance: newBalance })
   }
 
-  handleReelPositionInputChange = (event, index) => {
-    const { debugInputReelPosition } = this.state
-    const newDebugInputReelPosition = {}
-
-    Object.keys(debugInputReelPosition).map(
-      key => (newDebugInputReelPosition[key] = debugInputReelPosition[key])
-    )
-
-    newDebugInputReelPosition[index] =
-      event.target.value === '' ? '' : Number(event.target.value)
-
-    this.setState({ debugInputReelPosition: newDebugInputReelPosition })
-  }
-
-  handleSetReelsToPos = () => {
-    const { debugInputReelPosition } = this.state
-
-    const stops = Object.values(debugInputReelPosition).slice(0)
+  handleSetReelsToPos = reelPosition => {
+    const stops = Object.values(reelPosition).slice(0)
     const symbols = this.state.paylines.map(payline =>
       stops.map((reelPos, reelIndex) =>
         this.getReelSymbol(reelIndex, payline, reelPos)
@@ -376,7 +370,6 @@ class SlotMachine extends React.Component {
       bet,
       oldBalance,
       balance,
-      debugInputReelPosition,
       wins,
       canShowWins,
       paylines,
@@ -439,10 +432,10 @@ class SlotMachine extends React.Component {
                 {paylines.map((payline, i) => (
                   <Payline
                     key={`payline-${i}`}
+                    index={i}
                     x={reelBase}
                     y={paylineBases[i]}
                     fill={'gold'}
-                    number={i}
                     win={wins[payline]}
                     canShowWins={canShowWins}
                   />
@@ -451,7 +444,12 @@ class SlotMachine extends React.Component {
             </Stage>
           </Grid>
           <Grid item xs={4}>
-            <Paytable images={images} bet={bet} canShowWins={canShowWins} wins={wins} />
+            <Paytable
+              images={images}
+              bet={bet}
+              canShowWins={canShowWins}
+              wins={wins}
+            />
           </Grid>
 
           <Grid item xs={4}>
@@ -493,81 +491,13 @@ class SlotMachine extends React.Component {
             )}
           </Grid>
         </Grid>
-        <Paper elevation={2}>
-          <Container>
-            <Grid container spacing={2} justify="center">
-              <Grid item xs={12}>
-                <Typography variant="h4">Debug</Typography>
-              </Grid>
-              <Grid item xs={4}>
-                <Typography variant="h6" id="input-reel-positions">
-                  Reel positions
-                </Typography>
-              </Grid>
-              <Grid item xs={4}>
-                {reels.map((_reel, index) => (
-                  <TextField
-                    key={`reel-${index}-position`}
-                    onChange={event =>
-                      this.handleReelPositionInputChange(event, index)
-                    }
-                    id={`reel-${index}-position`}
-                    variant="outlined"
-                    label={`Reel ${index + 1}`}
-                    value={debugInputReelPosition[index]}
-                    inputProps={{
-                      step: 1,
-                      min: 0,
-                      max: 50,
-                      type: 'number',
-                      'aria-labelledby': 'input-reel-positions',
-                    }}
-                  />
-                ))}
-              </Grid>
-              <Grid item xs={4}>
-                <Button
-                  onClick={this.handleSetReelsToPos}
-                  variant="outlined"
-                  color="primary"
-                >
-                  Set
-                </Button>
-
-                <Button
-                  onClick={this.handleDebugTriggerWins}
-                  variant="outlined"
-                  color="primary"
-                >
-                  Trigger wins
-                </Button>
-              </Grid>
-              <Grid item xs={4}>
-                <Typography variant="h6" id="input-balance">
-                  Balance
-                </Typography>
-              </Grid>
-              <Grid item xs={4}>
-                <TextField
-                  key="input-balance"
-                  id="input-balance"
-                  onChange={this.handleInputBalanceChange}
-                  variant="outlined"
-                  label="Balance"
-                  value={balance}
-                  inputProps={{
-                    step: 1,
-                    min: 0,
-                    max: 100000,
-                    type: 'number',
-                    'aria-labelledby': 'input-balance',
-                  }}
-                />
-              </Grid>
-              <Grid item xs={4}></Grid>
-            </Grid>
-          </Container>
-        </Paper>
+        <DebugConsole
+          reels={reels}
+          balance={balance}
+          onInputBalanceChange={this.handleInputBalanceChange}
+          onSetReelsToPos={this.handleSetReelsToPos}
+          onTriggerWins={this.handleDebugTriggerWins}
+        />
       </React.Fragment>
     )
   }
@@ -580,7 +510,7 @@ SlotMachine.propTypes = {
 
 export default withStyles(styles)(SlotMachine)
 
-const Payline = ({ x, y, fill, number, win, canShowWins }) => {
+const Payline = ({ x, y, fill, index: paylineIndex, win, canShowWins }) => {
   const [showLine, setShowLine] = React.useState(false)
   let winField = null
   let line = null
@@ -604,9 +534,6 @@ const Payline = ({ x, y, fill, number, win, canShowWins }) => {
   })
 
   if (canShowWins && typeof win !== 'undefined') {
-    const AnimatedLine = animated('Line')
-    const AnimatedRect = animated('Rect')
-
     winField = (
       <PaylineWinAnimation reset config={{ duration: 500 }}>
         {props => (
@@ -657,7 +584,7 @@ const Payline = ({ x, y, fill, number, win, canShowWins }) => {
         onClick={handleShowLine}
       />
       <Text
-        text={`Payline ${number + 1}`}
+        text={`Payline ${paylineIndex + 1}`}
         x={x + 5}
         y={y + 53}
         onClick={handleShowLine}
@@ -666,6 +593,14 @@ const Payline = ({ x, y, fill, number, win, canShowWins }) => {
       {line}
     </React.Fragment>
   )
+}
+
+Payline.propTypes = {
+  x: PropTypes.number.isRequired,
+  y: PropTypes.number.isRequired,
+  fill: PropTypes.string.isRequired,
+  win: PropTypes.object.isRequired,
+  canShowWins: PropTypes.bool.isRequired,
 }
 
 const ReelBackground = ({ x }) => {
@@ -697,4 +632,8 @@ const ReelBackground = ({ x }) => {
       />
     </React.Fragment>
   )
+}
+
+ReelBackground.propTypes = {
+  x: PropTypes.number.isRequired,
 }
