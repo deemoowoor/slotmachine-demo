@@ -599,7 +599,7 @@ Payline.propTypes = {
   x: PropTypes.number.isRequired,
   y: PropTypes.number.isRequired,
   fill: PropTypes.string.isRequired,
-  win: PropTypes.object.isRequired,
+  win: PropTypes.object,
   canShowWins: PropTypes.bool.isRequired,
 }
 

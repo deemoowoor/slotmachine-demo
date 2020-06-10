@@ -103,7 +103,7 @@ const DebugConsole = ({
   )
 }
 
-DebugConsole.PropTypes = {
+DebugConsole.propTypes = {
   reels: PropTypes.array.isRequired,
   balance: PropTypes.number.isRequired,
   onSetReelsToPos: PropTypes.func.isRequired,
