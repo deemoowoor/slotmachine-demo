@@ -1,6 +1,8 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
+import { makeStyles } from '@material-ui/core/styles'
+
 import Grid from '@material-ui/core/Grid'
 import Button from '@material-ui/core/Button'
 import TextField from '@material-ui/core/TextField'
@@ -8,7 +10,21 @@ import Paper from '@material-ui/core/Paper'
 import Typography from '@material-ui/core/Typography'
 import Container from '@material-ui/core/Container'
 
+
+const styles = theme => ({
+  visible: {
+    visibility: 'visible'
+  },
+  hidden: {
+    visibility: 'hidden'
+  }
+})
+
+const useStyles = makeStyles(styles)
+
+
 const DebugConsole = ({
+  visible,
   reels,
   balance,
   onSetReelsToPos,
@@ -30,8 +46,10 @@ const DebugConsole = ({
     setReelPosition(newReelPosition)
   }
 
+  const classes = useStyles()
+
   return (
-    <Paper elevation={2}>
+    <Paper elevation={2} className={visible ? classes.visible : classes.hidden}>
       <Container>
         <Grid container spacing={2} justify="center">
           <Grid item xs={12}>
@@ -104,6 +122,7 @@ const DebugConsole = ({
 }
 
 DebugConsole.propTypes = {
+  visible: PropTypes.bool.isRequired,
   reels: PropTypes.array.isRequired,
   balance: PropTypes.number.isRequired,
   onSetReelsToPos: PropTypes.func.isRequired,
