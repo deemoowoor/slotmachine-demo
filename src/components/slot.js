@@ -8,6 +8,8 @@ import Button from '@material-ui/core/Button'
 import Typography from '@material-ui/core/Typography'
 import Slider from '@material-ui/core/Slider'
 import Container from '@material-ui/core/Container'
+import Drawer from '@material-ui/core/Drawer'
+import TextField from '@material-ui/core/TextField'
 
 import { Stage, Layer, Rect, Line, Text } from 'react-konva'
 
@@ -215,7 +217,7 @@ class SlotMachine extends React.Component {
   handleWins = stopAt => {
     const { paylines, bet } = this.state
 
-    const wins = []
+    const wins = {}
 
     paylines.map(payline => {
       const symbols = stopAt.map((reelPos, reelIndex) =>
@@ -391,8 +393,8 @@ class SlotMachine extends React.Component {
 
     return (
       <React.Fragment>
-        <Grid container spacing={2} justify="center">
-          <Grid item xs={8}>
+        <Grid container spacing={2} justify="flex-end">
+          <Grid item xs={12}>
             <Stage width={width} height={height} className={classes.stage}>
               <Layer>
                 {reels.map((_reel, index) => (
@@ -444,28 +446,20 @@ class SlotMachine extends React.Component {
             </Stage>
           </Grid>
           <Grid item xs={4}>
-            <Paytable
-              images={images}
-              bet={bet}
-              canShowWins={canShowWins}
-              wins={wins}
-            />
-          </Grid>
-
-          <Grid item xs={4}>
-            <Typography variant="h5">Bet: {bet}</Typography>
-            <Slider
-              disabled={!canSpin}
-              defaultValue={0}
-              value={typeof bet === 'number' ? bet : 0}
-              aria-labelledby="discrete-slider"
-              valueLabelDisplay="on"
-              step={1}
-              marks
-              min={1}
-              max={10}
-              onChange={(_, newValue) => this.setState({ bet: newValue })}
-            />
+            <TextField
+                key={`input-bet`}
+                onChange={(event, newValue) => this.setState({ bet: Number(event.target.value) })}
+                variant="outlined"
+                label={`Bet`}
+                value={bet}
+                disabled={!canSpin}
+                inputProps={{
+                  step: 1,
+                  min: 1,
+                  max: 10,
+                  type: 'number',
+                }}
+              />
           </Grid>
           <Grid item xs={4}>
             <Typography variant="h5">
@@ -475,20 +469,15 @@ class SlotMachine extends React.Component {
               </Spring>
             </Typography>
           </Grid>
-          <Grid item xs={1}>
-            {canSpin ? (
-              <Button
+          <Grid item xs={4}>
+            <Button
                 variant="contained"
                 color="primary"
+                disabled={!canSpin}
                 onClick={() => this.handleSpinButton()}
               >
                 Spin!
               </Button>
-            ) : (
-              <Button variant="contained" disabled>
-                Spin!
-              </Button>
-            )}
           </Grid>
         </Grid>
         <DebugConsole
@@ -498,6 +487,15 @@ class SlotMachine extends React.Component {
           onSetReelsToPos={this.handleSetReelsToPos}
           onTriggerWins={this.handleDebugTriggerWins}
         />
+        <Drawer variant="persistent" anchor="right" open={true}>
+          <Paytable
+            images={images}
+            bet={bet}
+            canShowWins={canShowWins}
+            wins={wins}
+          />
+        </Drawer>
+
       </React.Fragment>
     )
   }

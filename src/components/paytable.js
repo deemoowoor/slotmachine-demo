@@ -19,7 +19,10 @@ const styles = theme => ({
   paytable: {
     width: '100%',
     maxWidth: 360,
-    backgroundColor: theme.palette.background.paper,
+    backgroundColor: theme.palette.background.paper
+  },
+  paytableHeader: {
+    marginTop: '1em'
   }
 })
 
@@ -55,7 +58,7 @@ const Paytable = ({ images, bet, canShowWins, wins }) => {
 
   return (
     <Paper>
-      <Container><Typography variant="h5">Paytable</Typography></Container>
+      <Container><Typography variant="h5" className={classes.paytableHeader}>Paytable</Typography></Container>
       <List className={classes.paytable} dense={true}>
         {PAYTABLE_VIEW.map((item, index) => {
           return (
@@ -72,6 +75,7 @@ const Paytable = ({ images, bet, canShowWins, wins }) => {
                 </AvatarGroup>
               </ListItemAvatar>
               <ListItemText
+                className={classes.listItemText}
                 primary={`${item.name}`}
                 secondary={getPaylineText(item.payline)}
               />
