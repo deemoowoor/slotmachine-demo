@@ -32,8 +32,6 @@ const Header = ({ siteTitle }) => {
   const classes = useStyles()
 
   const theme = useTheme()
-  const [open, setOpen] = React.useState(false)
-
   return (
     <div className={classes.root}>
       <CssBaseline />
