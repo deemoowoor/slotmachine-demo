@@ -11,6 +11,9 @@ import TextField from '@material-ui/core/TextField'
 import SettingsApplicationsIcon from '@material-ui/icons/SettingsApplications'
 import IconButton from '@material-ui/core/IconButton'
 
+import Backdrop from '@material-ui/core/Backdrop'
+import CircularProgress from '@material-ui/core/CircularProgress'
+
 import { Stage, Layer, Rect, Line, Text } from 'react-konva'
 
 import { Spring } from 'react-spring/renderprops-konva'
@@ -23,6 +26,10 @@ import DebugConsole from './debugConsole'
 const styles = theme => ({
   stage: {
     left: '-200px',
+  },
+  backdrop: {
+    zIndex: theme.zIndex.drawer + 1,
+    color: '#fff',
   },
 })
 
@@ -373,8 +380,12 @@ class SlotMachine extends React.Component {
 
     const { stroke, classes } = this.props
 
-    if (!reels) {
-      return null
+    if (!reels || Object.keys(images).length == 0) {
+      return (
+        <Backdrop className={classes.backdrop} open={true}>
+          <CircularProgress color="inherit" />
+        </Backdrop>
+      )
     }
 
     const reelBase = 2
