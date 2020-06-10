@@ -14,7 +14,7 @@ import IconButton from '@material-ui/core/IconButton'
 import { Stage, Layer, Rect, Line, Text } from 'react-konva'
 
 import { Spring } from 'react-spring/renderprops-konva'
-import { Keyframes, animated } from 'react-spring/renderprops'
+import { Keyframes } from 'react-spring/renderprops'
 
 import Reel from './reel'
 import Paytable from './paytable'
@@ -79,14 +79,6 @@ const REEL = [
   0,
   4,
 ]
-
-/*
-const SYMBOL_CHERRY = 1
-const SYMBOL_SEVEN = 2
-const SYMBOL_3BAR = 3
-const SYMBOL_2BAR = 4
-const SYMBOL_1BAR = 5
-*/
 
 const PAYTABLE = {
   '[1]': payline =>
