@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 
 import { makeStyles } from '@material-ui/core/styles'
 
@@ -11,15 +12,15 @@ import Avatar from '@material-ui/core/Avatar'
 import AvatarGroup from '@material-ui/core/Avatar'
 import Paper from '@material-ui/core/Paper'
 import Container from '@material-ui/core/Container'
-
 import Typography from '@material-ui/core/Typography'
+import './paytable.css'
 
 const styles = theme => ({
   paytable: {
     width: '100%',
     maxWidth: 360,
     backgroundColor: theme.palette.background.paper,
-  },
+  }
 })
 
 const useStyles = makeStyles(styles)
@@ -58,7 +59,7 @@ const Paytable = ({ images, bet, canShowWins, wins }) => {
       <List className={classes.paytable} dense={true}>
         {PAYTABLE_VIEW.map((item, index) => {
           return (
-            <ListItem key={index} selected={canShowWins && winIndexes.includes(index)}>
+            <ListItem key={index} className={classes.listItem} selected={canShowWins && winIndexes.includes(index)}>
               <ListItemAvatar>
                 <AvatarGroup max={3}>
                   {item.icons.map(icon => (
@@ -83,6 +84,13 @@ const Paytable = ({ images, bet, canShowWins, wins }) => {
       </List>
     </Paper>
   )
+}
+
+Paytable.propTypes = {
+  images: PropTypes.object.isRequired,
+  bet: PropTypes.number.isRequired,
+  canShowWins: PropTypes.bool.isRequired,
+  wins: PropTypes.object.isRequired
 }
 
 export default Paytable
